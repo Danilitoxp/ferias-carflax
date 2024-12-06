@@ -55,6 +55,12 @@ header p {
   position: relative;
 }
 
+#setor {
+  border: 1px solid #006eff;
+  padding: 10px;
+  border-radius: 10px;
+}
+
 .input-container input {
   padding: 8px;
   font-size: 14px;

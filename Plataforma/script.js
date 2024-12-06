@@ -49,6 +49,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   const closeModalFuncionario = document.querySelector(".close-modal");
   const closeModalFerias = document.querySelector(".close-modal-ferias");
 
+  
+
   let hoje = new Date();
   let mesAtual = hoje.getMonth(); // Obtém o mês atual (0 = Janeiro, 11 = Dezembro)
   let anoAtual = hoje.getFullYear(); // Obtém o ano atual
@@ -80,33 +82,26 @@ document.addEventListener("DOMContentLoaded", async function () {
     exibirNotificacao("Férias cadastradas com sucesso para " + nomeFuncionario);
   }
 
-  async function verificarConflitoFerias(
-    nomeFuncionario,
-    dataInicioDate,
-    dataFimDate
-  ) {
-    // Recuperar todas as férias cadastradas
-    const feriasFuncionarios = await buscarFeriasFuncionarios();
-
-    // Verificar conflitos
+  async function verificarConflitoFerias(nomeFuncionario, dataInicioDate, dataFimDate) {
+    const feriasFuncionarios = await buscarFeriasFuncionarios(); // Buscar no Firestore
+  
     for (let ferias of feriasFuncionarios) {
       if (ferias.nomeFuncionario !== nomeFuncionario) {
-        // Ignorar o próprio funcionário
         const inicioFerias = new Date(ferias.dataInicio);
         const fimFerias = new Date(ferias.dataFim);
-
-        // Verificar sobreposição de datas
+  
         if (
           (dataInicioDate <= fimFerias && dataInicioDate >= inicioFerias) ||
           (dataFimDate <= fimFerias && dataFimDate >= inicioFerias) ||
           (dataInicioDate <= inicioFerias && dataFimDate >= fimFerias)
         ) {
-          return true; // Existe conflito
+          return true;
         }
       }
     }
-    return false; // Sem conflitos
+    return false;
   }
+  
 
   // Função fictícia para buscar todas as férias cadastradas
   async function buscarFeriasFuncionarios() {
@@ -149,13 +144,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   async function atualizarFeriasNoFirestore(idFuncionario, diasFerias) {
     try {
       const funcionarioRef = doc(db, "funcionarios", idFuncionario);
+      const diasFormatted = diasFerias.map(dia => ({
+        ...dia,
+        data: new Date(dia.ano, dia.mes, dia.dia).toISOString() // Converte para ISO
+      }));
       await updateDoc(funcionarioRef, {
-        diasFerias: diasFerias,
+        diasFerias: diasFormatted,
       });
     } catch (e) {
       console.error("Erro ao atualizar os dias de férias: ", e);
     }
   }
+  
 
   async function salvarFuncionarioNoFirestore(nome, cargo, foto, cor) {
     try {
@@ -249,19 +249,35 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-  document.querySelectorAll(".removerFerias").forEach((button) => {
-    button.addEventListener("click", async (event) => {
-      const idFuncionario = event.target.getAttribute("data-id");
-  
-      // Confirmação de remoção
-      const confirmacao = window.confirm("Você tem certeza que deseja remover as férias deste funcionário?");
-      if (confirmacao) {
-        // Chama a função de remover férias se o usuário confirmar
-        await removerFeriasFuncionario(idFuncionario);
-      } else {
-      }
+ async function removerFeriasFuncionario(idFuncionario) {
+  try {
+    // Encontrar o funcionário no array
+    const funcionario = funcionarios.find((f) => f.id === idFuncionario);
+
+    if (!funcionario) {
+      console.error("Funcionário não encontrado!");
+      return;
+    }
+
+    // Remover as férias do funcionário
+    funcionario.diasFerias = [];
+
+    // Atualizar no Firestore
+    const funcionarioRef = doc(db, "funcionarios", idFuncionario);
+    await updateDoc(funcionarioRef, {
+      diasFerias: [] // Remover as férias do funcionário
     });
-  });
+
+    // Atualizar o frontend
+    renderizarFuncionarios(); // Re-renderiza a lista de funcionários para refletir a remoção das férias
+
+    // Notificar sucesso
+    exibirNotificacao("Férias removidas com sucesso para " + funcionario.nome);
+  } catch (e) {
+    console.error("Erro ao remover férias do funcionário: ", e);
+  }
+}
+
   
 
   const meses = [
@@ -401,6 +417,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  document.getElementById("setor").addEventListener("change", function() {
+    const setorSelecionado = this.value;
+    filtrarFuncionariosPorSetor(setorSelecionado);
+  });
+  
+  // Função para filtrar funcionários e suas férias com base no setor selecionado
+  async function filtrarFuncionariosPorSetor(setor) {
+    const funcionariosFiltrados = funcionarios.filter((funcionario) => funcionario.cargo === setor);
+    renderizarFuncionarios(funcionariosFiltrados);
+  }
+
   function adicionarFuncionario(nome, cargo, foto, cor) {
     const funcionario = { nome, cargo, foto, cor, diasFerias: [] };
 
@@ -411,34 +438,69 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function renderizarFuncionarios(lista = funcionarios) {
     const funcionariosContainer = document.querySelector(".funcionarios");
-    funcionariosContainer.innerHTML = "";
-  
+    funcionariosContainer.innerHTML = ""; // Limpa o container antes de adicionar os novos elementos
+
     lista.forEach((funcionario) => {
-      const funcionarioElement = document.createElement("div");
-      funcionarioElement.classList.add("funcionario");
-  
-      // Adicionando a borda colorida
-      funcionarioElement.style.borderLeft = `5px solid ${funcionario.cor || "black"}`;
-  
-      funcionarioElement.innerHTML = `
-        <img src="${funcionario.foto}" alt="Foto de ${funcionario.nome}">
-        <div class="infos">
-          <h4>${funcionario.nome}</h4>
-          <p>${funcionario.cargo}</p>
-        </div>
-        <div class="menu-container">
-          <span id="removerFuncionario" class="material-symbols-outlined removerFuncionario" data-id="${funcionario.id}">
-            person_remove
-          </span>
-          <span id="removerFerias" class="removerFerias material-symbols-outlined" data-id="${funcionario.id}">
-            free_cancellation
-          </span>
-        </div>
-      `;
-  
-      // Adicionando o elemento no container
-      funcionariosContainer.appendChild(funcionarioElement);
+        // Criando o elemento de funcionário
+        const funcionarioElement = document.createElement("div");
+        funcionarioElement.classList.add("funcionario");
+
+        // Adicionando a borda colorida
+        funcionarioElement.style.borderLeft = `5px solid ${funcionario.cor || "black"}`;
+
+        // Criando o conteúdo interno do funcionário (imagem, nome, cargo)
+        const imgElement = document.createElement("img");
+        imgElement.src = funcionario.foto;
+        imgElement.alt = `Foto de ${funcionario.nome}`;
+
+        const infosDiv = document.createElement("div");
+        infosDiv.classList.add("infos");
+
+        const nomeElement = document.createElement("h4");
+        nomeElement.textContent = funcionario.nome;
+
+        const cargoElement = document.createElement("p");
+        cargoElement.textContent = funcionario.cargo;
+
+        infosDiv.appendChild(nomeElement);
+        infosDiv.appendChild(cargoElement);
+
+        // Criando o menu de ações
+        const menuContainer = document.createElement("div");
+        menuContainer.classList.add("menu-container");
+
+        // Botão para remover funcionário
+        const removerFuncionarioSpan = document.createElement("span");
+        removerFuncionarioSpan.classList.add("material-symbols-outlined", "removerFuncionario");
+        removerFuncionarioSpan.setAttribute("data-id", funcionario.id);
+        removerFuncionarioSpan.textContent = "person_remove";
+        removerFuncionarioSpan.addEventListener("click", () => {
+            // Lógica para remover funcionário
+            removerFuncionario(funcionario.id);
+        });
+
+        // Botão para remover férias
+        const removerFeriasSpan = document.createElement("span");
+        removerFeriasSpan.classList.add("removerFerias", "material-symbols-outlined");
+        removerFeriasSpan.setAttribute("data-id", funcionario.id);
+        removerFeriasSpan.textContent = "free_cancellation";
+        removerFeriasSpan.addEventListener("click", () => {
+            // Lógica para remover férias do funcionário
+            removerFeriasFuncionario(funcionario.id);
+        });
+
+        menuContainer.appendChild(removerFuncionarioSpan);
+        menuContainer.appendChild(removerFeriasSpan);
+
+        // Adicionando os elementos ao funcionário
+        funcionarioElement.appendChild(imgElement);
+        funcionarioElement.appendChild(infosDiv);
+        funcionarioElement.appendChild(menuContainer);
+
+        // Adicionando o elemento do funcionário ao container
+        funcionariosContainer.appendChild(funcionarioElement);
     });
+    
 
     document.getElementById("searchFuncionario").addEventListener("input", (event) => {
       const termoBusca = event.target.value.toLowerCase();
@@ -459,7 +521,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
+
+
   async function removerFeriasFuncionario(idFuncionario) {
+    // Solicita confirmação do usuário antes de remover as férias
+    const confirmarRemocao = window.confirm("Tem certeza de que deseja remover as férias deste funcionário?");
+    
+    if (!confirmarRemocao) {
+      return; // Se o usuário não confirmar, a função é interrompida
+    }
+  
     try {
       const funcionarioRef = doc(db, "funcionarios", idFuncionario);
       
@@ -482,6 +553,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       exibirNotificacao("Erro ao remover férias!");
     }
   }
+  
 
   // Função para excluir funcionário com confirmação
   async function excluirFuncionario(idFuncionario) {
