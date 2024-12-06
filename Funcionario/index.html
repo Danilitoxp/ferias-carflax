@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/Funcionario/style.css" />
+    <title>Férias | Carflax</title>
+    <link
+      rel="shortcut icon"
+      href="/images/Carflax Logomarca icone.svg"
+      type="image/x-icon"
+    />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="titulo">
+          <h3>Calendário de Férias | Carflax</h3>
+          <p>Fique por dentro de quem está de férias dentro da Carflax</p>
+        </div>
+
+        <div class="botoes">
+          <button id="adicionarFuncionarioBtn">Adicionar Funcionário</button>
+          <button id="adicionarFeriasBtn">Adicionar Férias</button>
+        </div>
+      </header>
+
+      <div class="notficacao" id="notificacao">
+        <div class="containernotficacao">
+          <span id="iconeCorreto" class="material-icons">task_alt</span>
+          <div class="infosnotificacao">
+            <h3>Atualizado</h3>
+            <p>Atualizado com Sucesso!</p>
+          </div>
+          <span class="material-icons close-icon" id="fecharNotificacao">close</span>
+        </div>
+      </div>
+      
+      
+
+
+      <div class="container">
+        <div class="colaboradores">
+          <input type="text" placeholder="Colaborador" />
+          <div class="funcionarios">
+            <div class="funcionario"></div>
+          </div>
+        </div>
+        <div class="calendario">
+          <div class="header">
+            <div class="configs">
+              <button id="hoje">Hoje</button>
+              <button id="voltar">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="10px"
+                  viewBox="0 -960 960 960"
+                  width="10px"
+                  fill="#434343"
+                >
+                  <path
+                    d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"
+                  />
+                </svg>
+              </button>
+              <p id="mesAno">Outubro 2024</p>
+              <button id="avancar">
+                <svg xmlns="http://www.w3.org/2000/svg" height="10px" viewBox="0 -960 960 960" width="10px" fill="#434343"><path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/></svg>
+              </button>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Dom</th>
+                  <th>Seg</th>
+                  <th>Ter</th>
+                  <th>Qua</th>
+                  <th>Qui</th>
+                  <th>Sex</th>
+                  <th>Sáb</th>
+                </tr>
+              </thead>
+              <tbody id="diasCalendario">
+                <!-- Os dias do mês serão preenchidos via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Adicionar Funcionário -->
+      <div class="modal" id="modalAdicionarFuncionario">
+        <div class="modal-content">
+          <span class="close-modal">&times;</span>
+          <h3>Adicionar Funcionário</h3>
+          <form id="form-adicionar-funcionario">
+            <label for="nome">Nome:</label>
+            <input
+              type="text"
+              id="nome"
+              name="nome"
+              placeholder="Digite o nome do funcionário"
+              required
+            />
+
+            <label for="setor">Setor:</label>
+            <select id="setor" name="setor" required>
+              <option value="Marketing">Marketing</option>
+              <option value="TI">TI</option>
+              <option value="Vendas">Vendas</option>
+              <option value="RH">RH</option>
+              <option value="Expedição">Expedição</option>
+              <option value="Faturamento">Faturamento</option>
+              <option value="Financeiro">Financeiro</option>
+            </select>
+
+            <label for="foto">Upload de Imagem:</label>
+            <input
+              type="file"
+              id="foto"
+              name="foto"
+              accept="image/*"
+              required
+            />
+
+            <label for="cor">Cor:</label>
+            <input type="color" id="cor" name="cor" value="#006eff" required />
+
+            <button type="submit">Adicionar</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal Adicionar Férias -->
+<div class="modal" id="modalAdicionarFerias">
+    <div class="modal-content">
+      <span class="close-modal-ferias">&times;</span>
+        <h3>Adicionar Férias</h3>
+        <form id="form-adicionar-ferias">
+            <label for="funcionario">Funcionário:</label>
+            <select id="funcionario" name="funcionario" required>
+                <!-- Funcionários serão adicionados aqui dinamicamente -->
+            </select>
+
+            <label for="dataInicio">Data Início:</label>
+            <input type="date" id="dataInicio" name="dataInicio" required />
+
+            <label for="dataFim">Data Fim:</label>
+            <input type="date" id="dataFim" name="dataFim" required />
+
+            <button type="submit">Adicionar</button>
+        </form>
+    </div>
+</div>
+    </main>
+
+    <script type="module" src="/Plataforma/script.js"></script>
+
+  </body>
+</html>

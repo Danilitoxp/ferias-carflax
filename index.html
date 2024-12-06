@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/Login/style.css" />
+    <title>Gestão de Férias | Carflax</title>
+    <link
+      rel="shortcut icon"
+      href="/images/Carflax Logomarca icone.svg"
+      type="image/x-icon"
+    />
+  </head>
+
+  <body>
+    <div class="loader"></div>
+
+    <div class="container" id="container">
+      <div class="form-container sign-in">
+        <form>
+          <h1>Entrar</h1>
+          <div class="social-icons">
+            <a href="#" class="icon"
+              ><i class="fa-brands fa-google-plus-g"></i
+            ></a>
+            <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" class="icon"
+              ><i class="fa-brands fa-linkedin-in"></i
+            ></a>
+          </div>
+          <span>ou use seu e-mail e senha</span>
+          <input type="email" id="email" placeholder="E-mail" />
+          <input type="password" id="password" placeholder="Senha" />
+          <a href="#">Esqueceu sua senha?</a>
+          <button type="button" id="login-btn">Entrar</button>
+        </form>
+      </div>
+      <div class="toggle-container">
+        <div class="toggle">
+          <div class="toggle-panel toggle-left">
+            <h1>Bem-vindo de volta!</h1>
+            <p>Insira seus dados para acessar o sistema de gestão de férias.</p>
+            <button class="hidden" id="login">Entrar</button>
+          </div>
+          <div class="toggle-panel toggle-right">
+            <img src="/images/Carflax Logomarca horizontal.svg" alt="" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/Login/script.js"></script>
+  </body>
+</html>

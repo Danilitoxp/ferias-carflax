@@ -1,0 +1,582 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "inter", sans-serif;
+    outline: none;
+  }
+  
+  body {
+    background-color: #c9d6ff;
+    background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100vh;
+    font-size: 16px;
+  }
+  
+  main {
+    width: 95%;
+    height: 95vh;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+  }
+
+  
+  header {
+    padding: 30px 50px 15px;
+    display: flex;
+    align-items: center;
+    line-height: 30px;
+    width: 100%;
+  }
+
+  .titulo {
+    text-align: center;
+    width: 100%; /* Garantir que ocupe a largura total do container */
+  }
+  
+  
+  .removerFerias {
+    font-size: 10px;
+    color: #756a00;
+  }
+  
+  
+  header h3 {
+    font-size: 25px;
+    color: #242424;
+  }
+  
+  header p {
+    color: #363636;
+    font-size: 12px;
+  }
+  
+  header button {
+    background-color: #006eff;
+    color: white;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 10px;
+    font-weight: 500;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  header button:hover {
+    background-color: #4998ff;
+  }
+  
+  #removerFuncionario {
+    cursor: pointer;
+    color: red;
+    font-size: 20px;
+  }
+  
+  #removerFuncionario:hover {
+    color: rgb(114, 0, 0);
+  }
+  
+  #removerFerias {
+    cursor: pointer;
+    color: #756a00;
+    font-size: 20px;
+  }
+  
+  #removerFerias:hover {
+    color: #443d00;
+  }
+  
+  /* Transições suaves para os itens */
+  .funcionario {
+    transition: transform 0.2s ease, opacity 0.2s ease; /* Transições para transformações e opacidade */
+    position: relative;
+    z-index: 1;
+  }
+  
+  .funcionario:hover {
+    cursor: pointer;
+    background-color: #b3b3b323;
+  }
+  
+  /* Quando está sendo arrastado */
+  .dragging {
+    transform: scale(1.05); /* Faz o item crescer levemente */
+    z-index: 10; /* Garante que fique acima dos outros */
+    opacity: 0.8; /* Transparência para visual mais leve */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Adiciona sombra */
+    transition: none; /* Remove transições enquanto arrasta */
+  }
+  
+  /* Para o espaço entre elementos */
+  .funcionario:not(.dragging) {
+    transition: transform 0.3s ease; /* Faz os itens deslizarem suavemente */
+  }
+  
+  
+  .containernotficacao {
+    position: absolute;
+    right: 40px;
+    bottom: 80px;
+    display: flex;
+    width: 500px;
+    align-items: center;
+    background-color: white;
+    gap: 10px;
+    border-radius: 20px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Adiciona sombra */
+  }
+  
+  #notificacao {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out; /* Transição suave */
+  }
+  
+  #notificacao.mostrar {
+    display: flex;
+    opacity: 1;
+  }
+  
+  
+  #iconeCorreto {
+    width: 50px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #00c928;
+    border-radius: 20px 0px 0px 20px;
+    color: white;
+  }
+  
+  .infosnotificacao {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #242424;
+    margin: 0px 15px;
+  }
+  
+  /* Estilo para o ícone de close */
+  .close-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 24px;
+    color: #434343;
+    transition: color 0.2s ease;
+  }
+  
+  .close-icon:hover {
+    color: #000;
+  }
+  
+  
+  .infos {
+    flex: 1;
+  }
+  
+  .infos h4 {
+    font-size: 0.8rem;
+  }
+  
+  .menu-container {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0; /* Impede que a div diminua */
+  }
+  
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch; /* Estica os elementos para que fiquem alinhados */
+    gap: 20px;
+    flex-grow: 1;
+    padding: 20px;
+    max-width: 100%; /* Garante que o container não ultrapasse a largura */
+    overflow: hidden; /* Impede que elementos escapem da área visível */
+    box-sizing: border-box; /* Inclui padding no cálculo de largura/altura */
+  }
+  
+  .botoes {
+    display: none;
+  }
+
+  .colaboradores {
+    display: none;
+    flex-shrink: 1; /* Permite que a div encolha se necessário */
+    width: 25%; /* Garante que a largura da div não ultrapasse o container */
+    border: 2px solid #36363642;
+    padding: 10px;
+    border-radius: 20px;
+    box-sizing: border-box; /* Inclui padding no cálculo de largura/altura */
+    overflow: hidden; /* Impede que conteúdo ultrapasse a div */
+  }
+  
+  
+  .colaboradores input {
+    width: 100%;
+    height: 40px;
+    padding: 0px 20px;
+    border-radius: 25px;
+    border: none;
+    border: 1px solid #36363642;
+  }
+  
+  .calendario {
+    width: 100%;
+    border: 2px solid #36363642;
+    border-radius: 20px;
+    padding: 10px;
+  }
+  
+  .funcionarios {
+    max-height: 100%; /* Ajuste conforme necessário */
+    overflow-y: auto;
+    padding-bottom: 35px;
+  }
+  
+  /* Estilizando o scrollbar */
+  .funcionarios::-webkit-scrollbar {
+    width: 6px; /* Controla a largura do scrollbar */
+  }
+  
+  /* Estilo para a "trilha" do scrollbar */
+  .funcionarios::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
+  }
+  
+  /* Estilo para a parte do "polegar" do scrollbar (a parte que o usuário arrasta) */
+  .funcionarios::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+  }
+  
+  
+  .funcionario {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    margin-top: 10px;
+    border-radius: 5px;
+    width: 90%;
+  }
+  
+  .funcionario img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-left: 5px;
+  }
+  
+  .funcionario p {
+    font-size: 0.8rem;
+  }
+  
+  .calendario .header {
+    height: 40px;
+    display: flex;
+    font-weight: 400;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  
+  .férias::after {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 14px;
+  }
+  
+  .foto-funcionario {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-top: 5px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+  }
+  
+  .calendario button {
+    height: 40px;
+    background-color: transparent;
+    border: 1px solid #e7e7e7;
+    border-radius: 5px;
+    padding: 0px 15px;
+    cursor: pointer;
+  }
+  
+  .calendario button:hover {
+    background-color: #b4b4b48f;
+  }
+  
+  .hoje {
+    color: rgb(24, 204, 0);
+    font-weight: bolder;
+  }
+  
+  .configs {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+  }
+  
+  .header {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .calendario table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .calendario th,
+  .calendario td {
+    width: 14%;
+    height: 50px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #e7e7e7;
+    font-size: 16px;
+  }
+
+  /* Remover o tooltip de todos os td */
+td[title] {
+  pointer-events: none; /* Desabilita o hover sobre o td, impedindo a exibição do título */
+}
+
+/* Alternativamente, você pode ocultar o tooltip usando um pseudo-elemento */
+td[title]::after {
+  content: ''; /* Remove o conteúdo do título */
+  pointer-events: none; /* Impede que o tooltip apareça */
+}
+
+  
+  .calendario td {
+    cursor: pointer;
+  }
+  
+  .calendario td.férias {
+    font-weight: bold;
+    color: #fff;
+  }
+  
+  .calendario td:hover {
+    background-color: #f0f0f0;
+  }
+  
+  /* Modal */
+  
+  .modal {
+      display: none; /* Inicialmente oculto */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    
+  
+  /* Modal Adicionar Funcionário */
+  .modal-funcionario .modal-content {
+      max-width: 600px;
+      background-color: #fff;
+  }
+  
+  /* Modal Adicionar Férias */
+  #modalAdicionarFerias .modal-content {
+      max-width: 500px;
+      background-color: #fff;
+  }
+  
+  /* Mostrar o Modal */
+  .show {
+      display: block;
+      opacity: 1;
+      visibility: visible;
+  }
+  
+  .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 30px;
+      border: 1px solid #ddd;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      transform: scale(0.9);
+  }
+  
+  .modal.show .modal-content {
+      transform: scale(1);
+  }
+  
+  .modal.show {
+      display: flex; /* Torna o modal visível */
+    }
+  
+  .modal.show .modal-content {
+    transform: scale(1);
+  }
+  
+  .close-modal {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+  }
+  
+  .close-modal:hover,
+  .close-modal:focus {
+    color: #000;
+  }
+  
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  form label {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #333;
+    font-size: 1rem;
+  }
+  
+  .modal h3 {
+    text-align: center;
+    font-size: 1.5rem;
+  }
+  
+  form input,
+  form select {
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s ease;
+  }
+  
+  form input:focus,
+  form select:focus {
+    border-color: #006eff;
+  }
+  
+  form button {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #006eff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  form button:hover {
+    background-color: #4998ff;
+  }
+  
+  /* Modal de Adicionar Férias */
+  #modalAdicionarFerias {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  
+  #modalAdicionarFerias.show {
+    display: block;
+    font-size: 30px;
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  #modalAdicionarFerias .modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    transform: scale(0.9);
+  }
+  
+  #modalAdicionarFerias.show .modal-content {
+    transform: scale(1);
+  }
+  
+  #modalAdicionarFerias .close-modal {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+  }
+  
+  #modalAdicionarFerias .close-modal:hover,
+  #modalAdicionarFerias .close-modal:focus {
+    color: #000;
+  }
+  
+  form label {
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  
+  form input,
+  form select {
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 100%;
+  }
+  
+  form button {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #006eff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  form button:hover {
+    background-color: #4998ff;
+  }
+  
