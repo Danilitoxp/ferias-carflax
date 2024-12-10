@@ -124,7 +124,6 @@ header button:hover {
 .funcionario {
   transition: transform 0.2s ease, opacity 0.2s ease; /* Transições para transformações e opacidade */
   position: relative;
-  z-index: 1;
 }
 
 .funcionario:hover {
@@ -590,3 +589,63 @@ form button {
 form button:hover {
   background-color: #4998ff;
 }
+
+@media screen and (max-width: 768px) {
+  header {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header h3 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  header p {
+    text-align: center;
+    line-height: 15px;
+    margin-bottom: 15px;
+  }
+
+  header button {
+    padding: 7px;
+    font-size: 12px;
+  }
+
+  .botoes {
+    display: flex;
+    gap: 10px;
+    height: 40px;
+  }
+
+  .container {
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+
+  .colaboradores{
+    width: 100%;
+    height: 100%;
+  } 
+
+  .configs {
+    gap: 40px;
+  }
+
+  .calendario {
+    width: 100%;
+    border-radius: 10px;
+    border: none;
+    padding: 0px;
+    font-size: 14px;
+  }
+}
+
