@@ -61,10 +61,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       console.error("Funcionário não encontrado!");
       return;
     }
-
+  
     const dias = [];
     let dataAtual = new Date(dataInicio);
-
+  
     while (dataAtual <= dataFim) {
       dias.push({
         dia: dataAtual.getDate(),
@@ -73,12 +73,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
       dataAtual.setDate(dataAtual.getDate() + 1);
     }
-
-    await atualizarFeriasNoFirestore(funcionario.id, dias);
+  
+    await atualizarFeriasNoFirestore(funcionario.id, dias, funcionario.cargo); // Passa o setor
     funcionario.diasFerias = dias;
-
+  
     preencherCalendario();
-
+  
     exibirNotificacao("Férias cadastradas com sucesso para " + nomeFuncionario);
   }
 
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     return true; // Permite adicionar as férias
   }
 
-  async function atualizarFeriasNoFirestore(idFuncionario, diasFerias) {
+  async function atualizarFeriasNoFirestore(idFuncionario, diasFerias, setor) {
     try {
       const funcionarioRef = doc(db, "funcionarios", idFuncionario);
       const diasFormatted = diasFerias.map(dia => ({
@@ -150,6 +150,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       }));
       await updateDoc(funcionarioRef, {
         diasFerias: diasFormatted,
+        setor: setor // Atualiza o setor se necessário
       });
     } catch (e) {
       console.error("Erro ao atualizar os dias de férias: ", e);
@@ -165,8 +166,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         foto: foto,
         cor: cor,
         diasFerias: [],
+        setor: cargo // Salva o setor
       });
-
+  
       const funcionario = {
         nome,
         cargo,
@@ -175,12 +177,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         diasFerias: [],
         id: docRef.id,
       };
-
+  
       funcionarios.push(funcionario);
-
       renderizarFuncionarios();
       preencherSelectFuncionarios();
-
+  
       console.log("Funcionário adicionado com ID: ", docRef.id);
     } catch (e) {
       console.error("Erro ao adicionar funcionário: ", e);
@@ -367,12 +368,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       td.style.backgroundImage = "";
       td.title = "";
     });
-
+  
     const feriasPorDia = {};
-
-    // Mapeia os dias ocupados por férias de funcionários
+    const setorSelecionado = document.getElementById("setor").value; // Obtém o setor selecionado
+  
+    // Mapeia os dias ocupados por férias de funcionários do setor selecionado
     funcionarios.forEach((funcionario) => {
-      if (funcionario.diasFerias) {
+      if (funcionario.diasFerias && funcionario.cargo === setorSelecionado) {
         funcionario.diasFerias.forEach((diaFerias) => {
           const chaveDia = `${diaFerias.dia}-${diaFerias.mes}-${diaFerias.ano}`;
           if (!feriasPorDia[chaveDia]) {
@@ -385,28 +387,25 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
       }
     });
-
+  
     // Atualiza o estilo do calendário
     for (const chaveDia in feriasPorDia) {
       const [dia, mes, ano] = chaveDia.split("-");
       const diaElement = document.querySelector(
         `td[data-dia="${dia}"][data-mes="${mes}"][data-ano="${ano}"]`
       );
-
+  
       if (diaElement) {
         const ferias = feriasPorDia[chaveDia];
-
+  
         // Se há mais de 1 funcionário no mesmo dia, aplicar um gradiente
         if (ferias.length > 1) {
-          // Cria um gradiente linear com base nas cores dos funcionários
           const cores = ferias.map((f) => f.cor);
           const gradiente = `linear-gradient(to right, ${cores.join(", ")})`;
-
+  
           diaElement.style.backgroundImage = gradiente;
           diaElement.style.color = "white"; // Pode ser ajustado para visibilidade
-          diaElement.title = `Férias de ${ferias
-            .map((f) => f.nome)
-            .join(", ")}`;
+          diaElement.title = `Férias de ${ferias.map((f) => f.nome).join(", ")}`;
         } else {
           // Apenas um funcionário no dia
           diaElement.style.backgroundColor = ferias[0].cor;
@@ -422,10 +421,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     filtrarFuncionariosPorSetor(setorSelecionado);
   });
   
-  // Função para filtrar funcionários e suas férias com base no setor selecionado
   async function filtrarFuncionariosPorSetor(setor) {
     const funcionariosFiltrados = funcionarios.filter((funcionario) => funcionario.cargo === setor);
     renderizarFuncionarios(funcionariosFiltrados);
+    
+    // Atualiza o calendário para mostrar apenas as férias do setor selecionado
+    preencherCalendario();
   }
 
   function adicionarFuncionario(nome, cargo, foto, cor) {
