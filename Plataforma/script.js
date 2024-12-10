@@ -179,6 +179,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       };
   
       funcionarios.push(funcionario);
+      console.log("Funcionário adicionado:", funcionario); // Adicione esta linha
       renderizarFuncionarios();
       preencherSelectFuncionarios();
   
@@ -242,6 +243,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             ...doc.data() // Inclui todos os dados do documento
           });
         });
+        console.log("Funcionários carregados:", funcionarios); // Adicione esta linha
         funcionariosCacheados = true;
         renderizarFuncionarios(); // Chama a função para renderizar os funcionários
       } catch (e) {
@@ -419,15 +421,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("setor").addEventListener("change", function() {
     const setorSelecionado = this.value;
     filtrarFuncionariosPorSetor(setorSelecionado);
-  });
+    preencherSelectFuncionarios(setorSelecionado); // Atualiza o select de funcionários
+    preencherCalendario(); // Atualiza o calendário
+});
   
-  async function filtrarFuncionariosPorSetor(setor) {
-    const funcionariosFiltrados = funcionarios.filter((funcionario) => funcionario.cargo === setor);
-    renderizarFuncionarios(funcionariosFiltrados);
-    
-    // Atualiza o calendário para mostrar apenas as férias do setor selecionado
-    preencherCalendario();
-  }
+async function filtrarFuncionariosPorSetor(setor) {
+  const funcionariosFiltrados = funcionarios.filter((funcionario) => funcionario.cargo === setor);
+  renderizarFuncionarios(funcionariosFiltrados);
+}
 
   function adicionarFuncionario(nome, cargo, foto, cor) {
     const funcionario = { nome, cargo, foto, cor, diasFerias: [] };
@@ -440,6 +441,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   function renderizarFuncionarios(lista = funcionarios) {
     const funcionariosContainer = document.querySelector(".funcionarios");
     funcionariosContainer.innerHTML = ""; // Limpa o container antes de adicionar os novos elementos
+
+    const fragment = document.createDocumentFragment(); // Cria um fragmento de documento
 
     lista.forEach((funcionario) => {
         // Criando o elemento de funcionário
@@ -498,18 +501,27 @@ document.addEventListener("DOMContentLoaded", async function () {
         funcionarioElement.appendChild(infosDiv);
         funcionarioElement.appendChild(menuContainer);
 
-        // Adicionando o elemento do funcionário ao container
-        funcionariosContainer.appendChild(funcionarioElement);
+        // Adicionando o elemento do funcionário ao fragmento
+        fragment.appendChild(funcionarioElement);
     });
+
+    // Adiciona o fragmento ao container de funcionários de uma vez
+    funcionariosContainer.appendChild(fragment);
     
 
-    document.getElementById("searchFuncionario").addEventListener("input", (event) => {
-      const termoBusca = event.target.value.toLowerCase();
-      const funcionariosFiltrados = funcionarios.filter((funcionario) =>
-        funcionario.nome.toLowerCase().includes(termoBusca)
-      );
-      renderizarFuncionarios(funcionariosFiltrados);
-    });
+    let timeoutId;
+
+document.getElementById("searchFuncionario").addEventListener("input", (event) => {
+  clearTimeout(timeoutId); // Limpa o timeout anterior
+  const termoBusca = event.target.value.toLowerCase();
+
+  timeoutId = setTimeout(() => {
+    const funcionariosFiltrados = funcionarios.filter((funcionario) =>
+      funcionario.nome.toLowerCase().includes(termoBusca)
+    );
+    renderizarFuncionarios(funcionariosFiltrados);
+  }, 300); // Aguarda 300ms após o último evento de input
+});
     
     
 
@@ -640,17 +652,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     preencherCalendario();
   });
 
-  function preencherSelectFuncionarios() {
+  function preencherSelectFuncionarios(setorSelecionado) {
     const selectFuncionario = document.getElementById("funcionario");
-    selectFuncionario.innerHTML = "";
+    selectFuncionario.innerHTML = ""; // Limpa as opções anteriores
 
-    funcionarios.forEach((funcionario) => {
-      const option = document.createElement("option");
-      option.value = funcionario.nome;
-      option.textContent = funcionario.nome;
-      selectFuncionario.appendChild(option);
+    const funcionariosFiltrados = funcionarios.filter(funcionario => funcionario.cargo === setorSelecionado);
+
+    funcionariosFiltrados.forEach((funcionario) => {
+        const option = document.createElement("option");
+        option.value = funcionario.nome;
+        option.textContent = funcionario.nome;
+        selectFuncionario.appendChild(option);
     });
-  }
+}
 
   function exibirNotificacao(mensagem) {
     const notificacao = document.getElementById("notificacao");
@@ -671,10 +685,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   btnAdicionarFerias.addEventListener("click", () => {
+    const setorSelecionado = document.getElementById("setor").value; // Obtém o setor selecionado
+    preencherSelectFuncionarios(setorSelecionado); // Atualiza o select de funcionários
     modalFerias.classList.add("show");
     modalFuncionario.classList.remove("show");
-    preencherSelectFuncionarios();
-  });
+});
 
   document
     .getElementById("form-adicionar-ferias")
