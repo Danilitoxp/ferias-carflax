@@ -49,7 +49,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   const closeModalFuncionario = document.querySelector(".close-modal");
   const closeModalFerias = document.querySelector(".close-modal-ferias");
 
-  
+  const setorSelecionado = "Vendas";
+  document.getElementById("setor").value = setorSelecionado;
+
+  // Carregar os funcionários e filtrar por setor
+  await carregarFuncionariosDoFirestore();
+  filtrarFuncionariosPorSetor(setorSelecionado); // Filtra os funcionários para mostrar apenas os de vendas
+  preencherSelectFuncionarios(setorSelecionado);
 
   let hoje = new Date();
   let mesAtual = hoje.getMonth(); // Obtém o mês atual (0 = Janeiro, 11 = Dezembro)
@@ -423,7 +429,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     filtrarFuncionariosPorSetor(setorSelecionado);
     preencherSelectFuncionarios(setorSelecionado); // Atualiza o select de funcionários
     preencherCalendario(); // Atualiza o calendário
-});
+  });
   
 async function filtrarFuncionariosPorSetor(setor) {
   const funcionariosFiltrados = funcionarios.filter((funcionario) => funcionario.cargo === setor);
@@ -655,16 +661,16 @@ document.getElementById("searchFuncionario").addEventListener("input", (event) =
   function preencherSelectFuncionarios(setorSelecionado) {
     const selectFuncionario = document.getElementById("funcionario");
     selectFuncionario.innerHTML = ""; // Limpa as opções anteriores
-
+  
     const funcionariosFiltrados = funcionarios.filter(funcionario => funcionario.cargo === setorSelecionado);
-
+  
     funcionariosFiltrados.forEach((funcionario) => {
-        const option = document.createElement("option");
-        option.value = funcionario.nome;
-        option.textContent = funcionario.nome;
-        selectFuncionario.appendChild(option);
+      const option = document.createElement("option");
+      option.value = funcionario.nome;
+      option.textContent = funcionario.nome;
+      selectFuncionario.appendChild(option);
     });
-}
+  }
 
   function exibirNotificacao(mensagem) {
     const notificacao = document.getElementById("notificacao");
