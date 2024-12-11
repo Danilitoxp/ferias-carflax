@@ -86,6 +86,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     preencherCalendario();
   
     exibirNotificacao("Férias cadastradas com sucesso para " + nomeFuncionario);
+  
+    // Atualiza o estado do botão de notificação
+    await verificarNotificacoes(); // Atualiza o botão de notificação
   }
 
   async function verificarConflitoFerias(nomeFuncionario, dataInicioDate, dataFimDate) {
@@ -127,26 +130,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     ];
   }
 
-  async function validarFerias(diasFerias, funcionarioId) {
-    let conflito = false;
-
-    for (let funcionario of funcionarios) {
-      if (funcionario.id !== funcionarioId && funcionario.diasFerias) {
-        // Verifica se há algum conflito de datas com outros funcionários
-        const conflitoFuncionario = funcionario.diasFerias.some((f) =>
-          diasFerias.some(
-            (d) => d.dia === f.dia && d.mes === f.mes && d.ano === f.ano
-          )
-        );
-        if (conflitoFuncionario) {
-          conflito = true; // Há conflito de datas
-          break;
-        }
-      }
-    }
-    return true; // Permite adicionar as férias
-  }
-
   async function atualizarFeriasNoFirestore(idFuncionario, diasFerias, setor) {
     try {
       const funcionarioRef = doc(db, "funcionarios", idFuncionario);
@@ -163,37 +146,164 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
   
+  // notificacao
+// Selecionar o modal e o botão de fechar
+const modalAlerta = document.getElementById('modalAlerta');
+const closeButton = document.querySelector('.close-modal-alerta');
 
-  async function salvarFuncionarioNoFirestore(nome, cargo, foto, cor) {
-    try {
-      const docRef = await addDoc(collection(db, "funcionarios"), {
-        nome: nome,
-        cargo: cargo,
-        foto: foto,
-        cor: cor,
-        diasFerias: [],
-        setor: cargo // Salva o setor
-      });
-  
-      const funcionario = {
-        nome,
-        cargo,
-        foto,
-        cor,
-        diasFerias: [],
-        id: docRef.id,
-      };
-  
-      funcionarios.push(funcionario);
-      console.log("Funcionário adicionado:", funcionario); // Adicione esta linha
-      renderizarFuncionarios();
-      preencherSelectFuncionarios();
-  
-      console.log("Funcionário adicionado com ID: ", docRef.id);
-    } catch (e) {
-      console.error("Erro ao adicionar funcionário: ", e);
-    }
+// Função para abrir o modal
+function abrirModal() {
+  modalAlerta.style.display = 'flex';
+}
+
+// Função para fechar o modal
+function fecharModal() {
+  modalAlerta.style.display = 'none';
+}
+
+// Fechar o modal ao clicar no botão de fechar
+closeButton.addEventListener('click', fecharModal);
+
+// Fechar o modal ao clicar fora do conteúdo do modal
+window.addEventListener('click', (event) => {
+  if (event.target === modalAlerta) {
+    fecharModal();
   }
+});
+
+// Adicionar evento de clique no botão de notificação
+document.getElementById('alerta').addEventListener('click', async () => {
+  await verificarNotificacoes(); // Chama a função para verificar notificações ao clicar no botão
+  abrirModal(); // Abre o modal após verificar as notificações
+});
+
+async function verificarNotificacoes() {
+  const notificacoes = await buscarFuncionariosProximosFerias();
+
+  const botaoNotificacao = document.getElementById('alerta');
+
+  if (notificacoes.length > 0) {
+    mostrarNotificacoes(notificacoes); // Chama a função para mostrar as notificações
+    botaoNotificacao.innerHTML = '<img src="/images/notficacao.svg" alt="Notificação">'; // Exibe o ícone de notificação
+  } else {
+    botaoNotificacao.innerHTML = '<img src="/images/semNotficacao.svg" alt="Notificação">'; // Exibe o ícone de sem notificação
+    console.log("Nenhum funcionário próximo de tirar férias.");
+  }
+}
+
+
+async function mostrarNotificacoes(notificacoes) {
+  const notificacoesContainer = document.querySelector('.notificacoes');
+  notificacoesContainer.innerHTML = ''; // Limpa notificações anteriores
+
+  notificacoes.forEach(funcionario => {
+    const divFuncionario = document.createElement('div');
+    divFuncionario.classList.add('funcionario-alerta');
+    
+    // Obtém a data de início e a data de término das férias
+    const diasFerias = funcionario.diasFerias;
+    if (diasFerias && diasFerias.length > 0) {
+      const dataInicio = new Date(diasFerias[0].data);
+      const dataFim = new Date(diasFerias[diasFerias.length - 1].data);
+      
+      // Formata as datas para o formato desejado
+      const dataInicioFormatada = dataInicio.toLocaleDateString();
+      const dataFimFormatada = dataFim.toLocaleDateString();
+
+      divFuncionario.innerHTML = `
+        <img src="${funcionario.foto || 'https://via.placeholder.com/60'}" alt="Foto do funcionário" class="funcionario-img">
+        <div class="infos">
+          <span class="funcionario-nome">${funcionario.nome}</span>
+          <p class="funcionario-detalhes">${funcionario.nome} sairá de férias em ${dataInicioFormatada} até ${dataFimFormatada}!</p>
+        </div>
+      `;
+    }
+
+    // Adiciona evento de clique para marcar como visto
+    divFuncionario.addEventListener('click', async () => {
+      funcionario.visto = true; // Marca como visto
+      divFuncionario.classList.add('visto'); // Adiciona a classe para aplicar o estilo
+
+      // Atualiza o Firestore para marcar a notificação como vista
+      await updateDoc(doc(db, "funcionarios", funcionario.id), {
+        visto: true
+      });
+
+      // Atualiza o botão de notificação
+      const botaoNotificacao = document.getElementById('alerta');
+      botaoNotificacao.innerHTML = '<img src="/images/semNotficacao.svg" alt="Notificação">'; // Atualiza o botão para sem notificação
+    });
+
+    notificacoesContainer.appendChild(divFuncionario);
+  });
+}
+
+async function buscarFuncionariosProximosFerias() {
+  const hoje = new Date();
+  const dataLimite = new Date(hoje);
+  dataLimite.setDate(hoje.getDate() + 30); // 30 dias a partir de hoje
+
+  const querySnapshot = await getDocs(collection(db, "funcionarios"));
+  const funcionariosProximosFerias = [];
+
+  querySnapshot.forEach((doc) => {
+    const funcionario = {
+      id: doc.id,
+      ...doc.data(),
+    };
+
+    // Verifica se o funcionário tem férias programadas
+    if (funcionario.diasFerias && funcionario.diasFerias.length > 0) {
+      funcionario.diasFerias.forEach((ferias) => {
+        const dataFerias = new Date(ferias.data);
+        
+        // Verifica se a data de férias é exatamente 30 dias a partir de hoje
+        const diffTime = dataFerias - hoje;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Converte a diferença para dias
+
+        if (diffDays === 30) {
+          funcionariosProximosFerias.push(funcionario); // Adiciona o funcionário ao array
+        }
+      });
+    }
+  });
+
+  return funcionariosProximosFerias;
+}
+  
+
+async function salvarFuncionarioNoFirestore(nome, cargo, foto, cor) {
+  try {
+    const docRef = await addDoc(collection(db, "funcionarios"), {
+      nome: nome,
+      cargo: cargo,
+      foto: foto,
+      cor: cor,
+      diasFerias: [],
+      setor: cargo, // Salva o setor
+      visto: false // Inicializa como não visto
+ });
+  
+    const funcionario = {
+      nome,
+      cargo,
+      foto,
+      cor,
+      diasFerias: [],
+      id: docRef.id,
+      visto: false // Inicializa como não visto
+    };
+  
+    funcionarios.push(funcionario);
+    console.log("Funcionário adicionado:", funcionario);
+    renderizarFuncionarios();
+    preencherSelectFuncionarios();
+  
+    console.log("Funcionário adicionado com ID: ", docRef.id);
+  } catch (e) {
+    console.error("Erro ao adicionar funcionário: ", e);
+  }
+}
 
   async function redimensionarImagem(arquivo, larguraMaxima = 500) {
     const img = document.createElement("img");
@@ -249,7 +359,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             ...doc.data() // Inclui todos os dados do documento
           });
         });
-        console.log("Funcionários carregados:", funcionarios); // Adicione esta linha
         funcionariosCacheados = true;
         renderizarFuncionarios(); // Chama a função para renderizar os funcionários
       } catch (e) {
@@ -573,6 +682,12 @@ document.getElementById("searchFuncionario").addEventListener("input", (event) =
     }
   }
   
+  document.addEventListener('DOMContentLoaded', async () => {
+    await carregarFuncionariosDoFirestore();
+    verificarNotificacoes(); // Chama a função para verificar notificações ao carregar a página
+  });
+
+  
 
   // Função para excluir funcionário com confirmação
   async function excluirFuncionario(idFuncionario) {
@@ -734,6 +849,8 @@ document.getElementById("searchFuncionario").addEventListener("input", (event) =
       // Atualizar o calendário
       preencherCalendario();
     });
+
+    
 
   preencherCalendario();
 });
