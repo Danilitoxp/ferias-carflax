@@ -36,11 +36,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   const formAdicionarFuncionario = document.getElementById(
     "form-adicionar-funcionario"
   );
-  const funcionariosContainer = document.querySelector(".funcionarios");
   const botaoAvancar = document.getElementById("avancar");
   const botaoHoje = document.getElementById("hoje");
   const btnAdicionarFerias = document.getElementById("adicionarFeriasBtn");
 
+  await verificarNotificacoes(); // Chama a função para verificar notificações ao clicar no botão
   await carregarFuncionariosDoFirestore();
 
   const modalFuncionario = document.querySelector(".modal");
@@ -128,6 +128,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         dataFim: "2024-12-20",
       },
     ];
+
+    
   }
 
   async function atualizarFeriasNoFirestore(idFuncionario, diasFerias, setor) {
@@ -137,14 +139,31 @@ document.addEventListener("DOMContentLoaded", async function () {
         ...dia,
         data: new Date(dia.ano, dia.mes, dia.dia).toISOString() // Converte para ISO
       }));
-      await updateDoc(funcionarioRef, {
-        diasFerias: diasFormatted,
-        setor: setor // Atualiza o setor se necessário
-      });
+  
+      if (diasFormatted.length > 0) {
+        await updateDoc(funcionarioRef, {
+          diasFerias: diasFormatted,
+          setor: setor // Atualiza o setor se necessário
+        });
+      } else {
+        // Se não houver dias de férias restantes, remove as férias e a notificação
+        await updateDoc(funcionarioRef, {
+          diasFerias: [],
+          setor: setor,
+          visto: false // Opcional, para garantir que a notificação seja removida
+        });
+      }
+  
+      // Atualiza as notificações na interface
+      const notificacoes = await buscarFuncionariosProximosFerias();
+      mostrarNotificacoes(notificacoes);
+  
     } catch (e) {
       console.error("Erro ao atualizar os dias de férias: ", e);
     }
   }
+  
+  
   
   // notificacao
 // Selecionar o modal e o botão de fechar
@@ -173,39 +192,32 @@ window.addEventListener('click', (event) => {
 
 // Adicionar evento de clique no botão de notificação
 document.getElementById('alerta').addEventListener('click', async () => {
-  await verificarNotificacoes(); // Chama a função para verificar notificações ao clicar no botão
   abrirModal(); // Abre o modal após verificar as notificações
 });
 
-async function verificarNotificacoes() {
-  const notificacoes = await buscarFuncionariosProximosFerias();
 
-  const botaoNotificacao = document.getElementById('alerta');
-
-  if (notificacoes.length > 0) {
-    mostrarNotificacoes(notificacoes); // Chama a função para mostrar as notificações
-    botaoNotificacao.innerHTML = '<img src="/images/notficacao.svg" alt="Notificação">'; // Exibe o ícone de notificação
-  } else {
-    botaoNotificacao.innerHTML = '<img src="/images/semNotficacao.svg" alt="Notificação">'; // Exibe o ícone de sem notificação
-    console.log("Nenhum funcionário próximo de tirar férias.");
-  }
-}
 
 
 async function mostrarNotificacoes(notificacoes) {
   const notificacoesContainer = document.querySelector('.notificacoes');
   notificacoesContainer.innerHTML = ''; // Limpa notificações anteriores
 
-  notificacoes.forEach(funcionario => {
-    const divFuncionario = document.createElement('div');
-    divFuncionario.classList.add('funcionario-alerta');
-    
-    // Obtém a data de início e a data de término das férias
-    const diasFerias = funcionario.diasFerias;
-    if (diasFerias && diasFerias.length > 0) {
-      const dataInicio = new Date(diasFerias[0].data);
-      const dataFim = new Date(diasFerias[diasFerias.length - 1].data);
-      
+  const botaoNotificacao = document.getElementById('alerta');
+
+  for (const funcionario of notificacoes) {
+    if (funcionario.diasFerias && funcionario.diasFerias.length > 0) {
+      const divFuncionario = document.createElement('div');
+      divFuncionario.classList.add('funcionario-alerta');
+
+      // Inicializa o status "visto" se não existir
+      if (funcionario.visto === undefined) {
+        funcionario.visto = false;
+      }
+
+      // Obtém a data de início e a data de término das férias
+      const dataInicio = new Date(funcionario.diasFerias[0].data);
+      const dataFim = new Date(funcionario.diasFerias[funcionario.diasFerias.length - 1].data);
+
       // Formata as datas para o formato desejado
       const dataInicioFormatada = dataInicio.toLocaleDateString();
       const dataFimFormatada = dataFim.toLocaleDateString();
@@ -217,26 +229,65 @@ async function mostrarNotificacoes(notificacoes) {
           <p class="funcionario-detalhes">${funcionario.nome} sairá de férias em ${dataInicioFormatada} até ${dataFimFormatada}!</p>
         </div>
       `;
-    }
 
-    // Adiciona evento de clique para marcar como visto
-    divFuncionario.addEventListener('click', async () => {
-      funcionario.visto = true; // Marca como visto
-      divFuncionario.classList.add('visto'); // Adiciona a classe para aplicar o estilo
+      // Define a classe "visto" conforme o status do funcionário
+      if (funcionario.visto) {
+        divFuncionario.classList.add('visto');
+      } else {
+        divFuncionario.classList.remove('visto');
+      }
 
-      // Atualiza o Firestore para marcar a notificação como vista
-      await updateDoc(doc(db, "funcionarios", funcionario.id), {
-        visto: true
+      // Adiciona evento de clique para alternar o status de visto
+      divFuncionario.addEventListener('click', async () => {
+        funcionario.visto = !funcionario.visto; // Alterna o status de visto
+
+        // Adiciona ou remove a classe para aplicar o estilo
+        if (funcionario.visto) {
+          divFuncionario.classList.add('visto');
+        } else {
+          divFuncionario.classList.remove('visto');
+        }
+
+        // Atualiza o Firestore para marcar a notificação como vista ou não vista
+        await updateDoc(doc(db, "funcionarios", funcionario.id), {
+          visto: funcionario.visto
+        });
+
+        // Atualiza o ícone de notificação com base no status atual
+        atualizarIconeNotificacao(notificacoes);
       });
 
-      // Atualiza o botão de notificação
-      const botaoNotificacao = document.getElementById('alerta');
-      botaoNotificacao.innerHTML = '<img src="/images/semNotficacao.svg" alt="Notificação">'; // Atualiza o botão para sem notificação
-    });
+      notificacoesContainer.appendChild(divFuncionario);
+    }
+  }
 
-    notificacoesContainer.appendChild(divFuncionario);
-  });
+  // Inicializa o botão de notificação conforme o status inicial
+  atualizarIconeNotificacao(notificacoes);
 }
+
+function atualizarIconeNotificacao(notificacoes) {
+  const botaoNotificacao = document.getElementById('alerta');
+  const algumNaoVisto = notificacoes.some(f => !f.visto);
+
+  if (algumNaoVisto) {
+    botaoNotificacao.innerHTML = '<img src="/images/Notficacao.svg" alt="Notificação">'; // Ícone de notificação
+  } else {
+    botaoNotificacao.innerHTML = '<img src="/images/Sem Notficacao.svg" alt="Sem Notificação">'; // Ícone de sem notificação
+  }
+}
+
+async function verificarNotificacoes() {
+  const notificacoes = await buscarFuncionariosProximosFerias();
+
+  if (notificacoes.length > 0) {
+    mostrarNotificacoes(notificacoes); // Chama a função para mostrar as notificações
+  } else {
+    const botaoNotificacao = document.getElementById('alerta');
+    botaoNotificacao.innerHTML = '<img src="/images/Sem Notficacao.svg" alt="Sem Notificação">'; // Exibe o ícone de sem notificação
+    console.log("Nenhum funcionário próximo de tirar férias.");
+  }
+}
+
 
 async function buscarFuncionariosProximosFerias() {
   const hoje = new Date();
@@ -250,6 +301,7 @@ async function buscarFuncionariosProximosFerias() {
     const funcionario = {
       id: doc.id,
       ...doc.data(),
+      visto: doc.data().visto || false // Garante que o status visto seja inicializado corretamente
     };
 
     // Verifica se o funcionário tem férias programadas
@@ -270,6 +322,7 @@ async function buscarFuncionariosProximosFerias() {
 
   return funcionariosProximosFerias;
 }
+
   
 
 async function salvarFuncionarioNoFirestore(nome, cargo, foto, cor) {
@@ -282,8 +335,8 @@ async function salvarFuncionarioNoFirestore(nome, cargo, foto, cor) {
       diasFerias: [],
       setor: cargo, // Salva o setor
       visto: false // Inicializa como não visto
- });
-  
+    });
+
     const funcionario = {
       nome,
       cargo,
@@ -293,17 +346,19 @@ async function salvarFuncionarioNoFirestore(nome, cargo, foto, cor) {
       id: docRef.id,
       visto: false // Inicializa como não visto
     };
-  
+
     funcionarios.push(funcionario);
     console.log("Funcionário adicionado:", funcionario);
     renderizarFuncionarios();
     preencherSelectFuncionarios();
-  
+
     console.log("Funcionário adicionado com ID: ", docRef.id);
   } catch (e) {
     console.error("Erro ao adicionar funcionário: ", e);
   }
 }
+
+
 
   async function redimensionarImagem(arquivo, larguraMaxima = 500) {
     const img = document.createElement("img");
@@ -390,7 +445,9 @@ async function salvarFuncionarioNoFirestore(nome, cargo, foto, cor) {
     renderizarFuncionarios(); // Re-renderiza a lista de funcionários para refletir a remoção das férias
 
     // Notificar sucesso
+    verificarNotificacoes();
     exibirNotificacao("Férias removidas com sucesso para " + funcionario.nome);
+    atualizarIconeNotificacao();
   } catch (e) {
     console.error("Erro ao remover férias do funcionário: ", e);
   }
@@ -846,6 +903,7 @@ document.getElementById("searchFuncionario").addEventListener("input", (event) =
       // Fechar o modal de férias
       document.getElementById("modalAdicionarFerias").classList.remove("show");
 
+      verificarNotificacoes();
       // Atualizar o calendário
       preencherCalendario();
     });

@@ -765,6 +765,7 @@ form button:hover {
 .modal-alerta .funcionario-alerta {
   display: flex;
   align-items: center;
+  cursor: pointer;
   gap: 15px;
   background: #f9f9f9;
   padding: 10px;
