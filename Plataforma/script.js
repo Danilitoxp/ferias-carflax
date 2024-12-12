@@ -273,7 +273,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         '<img src="/images/Notficacao.svg" alt="Notificação">'; // Ícone de notificação
     } else {
       botaoNotificacao.innerHTML =
-        '<img src="/images/Sem Notficacao.svg" alt="Sem Notificação">'; // Ícone de sem notificação
+        '<img src="/images/sem Notficacao.svg" alt="Sem Notificação">'; // Ícone de sem notificação
     }
   }
 
@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     } else {
       const botaoNotificacao = document.getElementById("alerta");
       botaoNotificacao.innerHTML =
-        '<img src="/images/Sem Notficacao.svg" alt="Sem Notificação">'; // Exibe o ícone de sem notificação
+        '<img src="/images/sem Notficacao.svg" alt="sem Notificação">'; // Exibe o ícone de sem notificação
       console.log("Nenhum funcionário próximo de tirar férias.");
     }
   }
