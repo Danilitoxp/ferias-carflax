@@ -25,7 +25,6 @@
   </head>
   <body>
     <main>
-      
       <header>
         <div class="titulo">
           <h3>Calendário de Férias | Carflax</h3>
@@ -33,10 +32,7 @@
         </div>
 
         <div class="botoes">
-          <button id="alerta">
-            <img src="/images/sem notficacao.svg" alt="Notificação">
-          </button>
-        
+
           <select id="setor" name="setor" required>
             <option value="Vendas" data-icon="bx bx-store-alt">Vendas</option>
             <option value="Marketing" data-icon="bx bx-bullhorn">Marketing</option>
@@ -44,12 +40,12 @@
             <option value="Compras" data-icon="bx bx-cart">Compras</option>
             <option value="Expedição" data-icon="bx bx-package">Expedição</option>
             <option value="Financeiro" data-icon="bx bx-wallet">Financeiro</option>
-          </select>
-        
+        </select>
+
           <button id="adicionarFuncionarioBtn">Adicionar Funcionário</button>
           <button id="adicionarFeriasBtn">Adicionar Férias</button>
+
         </div>
-        
       </header>
 
       <div class="notficacao" id="notificacao">
@@ -178,17 +174,6 @@
 
           <button type="submit">Adicionar</button>
       </form>
-  </div>
-</div>
-
-    <!-- Modal Notificação de Férias -->
-<div class="modal modal-alerta" id="modalAlerta">
-  <div class="modal-content">
-    <button class="close-modal-alerta" aria-label="Fechar modal">&times;</button>
-    <h3 class="modal-title">Notificações</h3>
-    <div class="notificacoes">
-      <!-- As notificações dos funcionários serão inseridas aqui dinamicamente -->
-    </div>
   </div>
 </div>
 
