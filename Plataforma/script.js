@@ -183,77 +183,86 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   async function mostrarNotificacoes(notificacoes) {
-    const notificacoesContainer = document.querySelector(".notificacoes");
-    notificacoesContainer.innerHTML = ""; // Limpa notificações anteriores
+  // Ordena as notificações por status de visto e data de férias
+  notificacoes.sort((a, b) => {
+    if (a.visto && !b.visto) return 1;
+    if (!a.visto && b.visto) return -1;
+    const dataFeriasA = new Date(a.diasFerias[0].data);
+    const dataFeriasB = new Date(b.diasFerias[0].data);
+    return dataFeriasB - dataFeriasA;
+  });
 
-    const botaoNotificacao = document.getElementById("alerta");
+  const notificacoesContainer = document.querySelector(".notificacoes");
+  notificacoesContainer.innerHTML = ""; // Limpa notificações anteriores
 
-    for (const funcionario of notificacoes) {
-      if (funcionario.diasFerias && funcionario.diasFerias.length > 0) {
-        const divFuncionario = document.createElement("div");
-        divFuncionario.classList.add("funcionario-alerta");
+  const botaoNotificacao = document.getElementById("alerta");
 
-        // Inicializa o status "visto" se não existir
-        if (funcionario.visto === undefined) {
-          funcionario.visto = false;
-        }
+  for (const funcionario of notificacoes) {
+    if (funcionario.diasFerias && funcionario.diasFerias.length > 0) {
+      const divFuncionario = document.createElement("div");
+      divFuncionario.classList.add("funcionario-alerta");
 
-        // Obtém a data de início e a data de término das férias
-        const dataInicio = new Date(funcionario.diasFerias[0].data);
-        const dataFim = new Date(
-          funcionario.diasFerias[funcionario.diasFerias.length - 1].data
-        );
+      // Verifica se o status de visto existe e define como falso se não existir
+      if (funcionario.visto === undefined) {
+        funcionario.visto = false;
+      }
 
-        // Formata as datas para o formato desejado
-        const dataInicioFormatada = dataInicio.toLocaleDateString();
-        const dataFimFormatada = dataFim.toLocaleDateString();
+      // Obtém a data de início e a data de término das férias
+      const dataInicio = new Date(funcionario.diasFerias[0].data);
+      const dataFim = new Date(
+        funcionario.diasFerias[funcionario.diasFerias.length - 1].data
+      );
 
-        divFuncionario.innerHTML = `
-        <img src="${
-          funcionario.foto || "https://via.placeholder.com/60"
-        }" alt="Foto do funcionário" class="funcionario-img">
-        <div class="infos">
-          <span class="funcionario-nome">${funcionario.nome}</span>
-          <p class="funcionario-detalhes">${
-            funcionario.nome
-          } sairá de férias em ${dataInicioFormatada} até ${dataFimFormatada}!</p>
-        </div>
-      `;
+      // Formata as datas para o formato desejado
+      const dataInicioFormatada = dataInicio.toLocaleDateString();
+      const dataFimFormatada = dataFim.toLocaleDateString();
 
-        // Define a classe "visto" conforme o status do funcionário
+      divFuncionario.innerHTML = `
+      <img src="${
+        funcionario.foto || "https://via.placeholder.com/60"
+      }" alt="Foto do funcionário" class="funcionario-img">
+      <div class="infos">
+        <span class="funcionario-nome">${funcionario.nome}</span>
+        <p class="funcionario-detalhes">${
+          funcionario.nome
+        } sairá de férias em ${dataInicioFormatada} até ${dataFimFormatada}!</p>
+      </div>
+    `;
+
+      // Define a classe "visto" conforme o status do funcionário
+      if (funcionario.visto) {
+        divFuncionario.classList.add("visto");
+      } else {
+        divFuncionario.classList.remove("visto");
+      }
+
+      // Adiciona evento de clique para alternar o status de visto
+      divFuncionario.addEventListener("click", async () => {
+        funcionario.visto = !funcionario.visto; // Alterna o status de visto
+
+        // Adiciona ou remove a classe para aplicar o estilo
         if (funcionario.visto) {
           divFuncionario.classList.add("visto");
         } else {
           divFuncionario.classList.remove("visto");
         }
 
-        // Adiciona evento de clique para alternar o status de visto
-        divFuncionario.addEventListener("click", async () => {
-          funcionario.visto = !funcionario.visto; // Alterna o status de visto
-
-          // Adiciona ou remove a classe para aplicar o estilo
-          if (funcionario.visto) {
-            divFuncionario.classList.add("visto");
-          } else {
-            divFuncionario.classList.remove("visto");
-          }
-
-          // Atualiza o Firestore para marcar a notificação como vista ou não vista
-          await updateDoc(doc(db, "funcionarios", funcionario.id), {
-            visto: funcionario.visto,
-          });
-
-          // Atualiza o ícone de notificação com base no status atual
-          atualizarIconeNotificacao(notificacoes);
+        // Atualiza o Firestore para marcar a notificação como vista ou não vista
+        await updateDoc(doc(db, "funcionarios", funcionario.id), {
+          visto: funcionario.visto,
         });
 
-        notificacoesContainer.appendChild(divFuncionario);
-      }
-    }
+        // Atualiza o ícone de notificação com base no status atual
+        atualizarIconeNotificacao(notificacoes);
+      });
 
-    // Inicializa o botão de notificação conforme o status inicial
-    atualizarIconeNotificacao(notificacoes);
+      notificacoesContainer.appendChild(divFuncionario);
+    }
   }
+
+  // Inicializa o botão de notificação conforme o status inicial
+  atualizarIconeNotificacao(notificacoes);
+}
 
   function atualizarIconeNotificacao(notificacoes) {
     const botaoNotificacao = document.getElementById("alerta");
