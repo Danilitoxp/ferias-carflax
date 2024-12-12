@@ -273,7 +273,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         '<img src="/images/notficacao.svg" alt="Notificação">'; // Ícone de notificação
     } else {
       botaoNotificacao.innerHTML =
-        '<img src="/images/sem notficacao.svg" alt="Sem Notificação">'; // Ícone de sem notificação
+        '<img src="/images/sem Notficacao.svg" alt="Sem Notificação">'; // Ícone de sem notificação
     }
   }
 
